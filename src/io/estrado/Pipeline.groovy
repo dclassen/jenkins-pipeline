@@ -1,24 +1,26 @@
 #!/usr/bin/groovy
+
 package io.estrado;
 
 def kubectlTest() {
     // Test that kubectl can correctly communication with the Kubernetes API
     println "checking kubectl connnectivity to the API"
     sh "kubectl get nodes"
-
 }
 
+// setup helm connectivity to Kubernetes API and Tiller
+
+def helmInit() {
+   println "initiliazing helm client only"
+   sh "helm init --client-only"
+} 
+
 def helmLint(String chart_dir) {
-    // lint helm chart
     println "running helm lint ${chart_dir}"
     sh "helm lint ${chart_dir}"
-
 }
 
 def helmConfig() {
-    //setup helm connectivity to Kubernetes API and Tiller
-    println "initiliazing helm client"
-    sh "helm init"
     println "checking client/server version"
     sh "helm version"
 }
@@ -27,49 +29,64 @@ def helmConfig() {
 def helmDeploy(Map args) {
     //configure helm client and confirm tiller process is installed
     helmConfig()
-
     def String namespace
-
     // If namespace isn't parsed into the function set the namespace to the name
     if (args.namespace == null) {
         namespace = args.name
     } else {
         namespace = args.namespace
     }
-
     if (args.dry_run) {
         println "Running dry-run deployment"
-
         sh "helm upgrade --dry-run --install ${args.name} ${args.chart_dir} --set imageTag=${args.version_tag},replicas=${args.replicas},cpu=${args.cpu},memory=${args.memory},ingress.hostname=${args.hostname} --namespace=${namespace}"
     } else {
         println "Running deployment"
-
         // reimplement --wait once it works reliable
         sh "helm upgrade --install ${args.name} ${args.chart_dir} --set imageTag=${args.version_tag},replicas=${args.replicas},cpu=${args.cpu},memory=${args.memory},ingress.hostname=${args.hostname} --namespace=${namespace}"
-
         // sleeping until --wait works reliably
         sleep(20)
-
         echo "Application ${args.name} successfully deployed. Use helm status ${args.name} to check"
     }
 }
 
 def helmDelete(Map args) {
-        println "Running helm delete ${args.name}"
-
-        sh "helm delete ${args.name}"
+      println "Running helm delete ${args.name}"
+      sh "helm delete ${args.name}"
 }
 
 def helmTest(Map args) {
-    println "Running Helm test"
+      println "Running Helm test"
+      sh "helm test ${args.name} --cleanup"
+}
 
-    sh "helm test ${args.name} --cleanup"
+def helmPackage(Map args) {
+    dir ("${args.repo}") { sh "helm package ${args.chart}" }
+}
+
+def helmChartPublisherInit() {
+      sh 'apk update && apk add curl'
+}
+
+def helmChartPublish(Map args) {
+      sh "curl -i -X PUT -F repo=stable  -F chart=@${args.file} ${args.url}"
+}
+
+def gitCommit(Map args) {
+        println("commiting to github")
+        sshagent (credentials:["${args.creds_id}"]) {
+          sh "git checkout ${args.branch}"
+          sh "git config user.email \"${args.git_user_email}\""
+          sh "git config user.name \"${args.git_user}\""
+          sh 'git config push.default simple'
+          sh "git add ${args.chart}/values.yaml ${args.chart}/Chart.yaml"
+          sh "git commit -m \"Updating ${args.app_name}.image.tag to $args.commit_id\""
+          sh 'git status'
+          sh "git push origin ${args.branch}"
+        } // sshagent
 }
 
 def gitEnvVars() {
-    // create git envvars
     println "Setting envvars to tag container"
-
     sh 'git rev-parse HEAD > git_commit_id.txt'
     try {
         env.GIT_COMMIT_ID = readFile('git_commit_id.txt').trim()
@@ -78,7 +95,6 @@ def gitEnvVars() {
         error "${e}"
     }
     println "env.GIT_COMMIT_ID ==> ${env.GIT_COMMIT_ID}"
-
     sh 'git config --get remote.origin.url> git_remote_origin_url.txt'
     try {
         env.GIT_REMOTE_URL = readFile('git_remote_origin_url.txt').trim()
@@ -88,87 +104,42 @@ def gitEnvVars() {
     println "env.GIT_REMOTE_URL ==> ${env.GIT_REMOTE_URL}"
 }
 
-
-def containerBuildPub(Map args) {
-
-    println "Running Docker build/publish: ${args.host}/${args.acct}/${args.repo}:${args.tags}"
-
-    docker.withRegistry("https://${args.host}", "${args.auth_id}") {
-
-        // def img = docker.build("${args.acct}/${args.repo}", args.dockerfile)
-        def img = docker.image("${args.acct}/${args.repo}")
-        sh "docker build --build-arg VCS_REF=${env.GIT_SHA} --build-arg BUILD_DATE=`date -u +'%Y-%m-%dT%H:%M:%SZ'` -t ${args.acct}/${args.repo} ${args.dockerfile}"
-        for (int i = 0; i < args.tags.size(); i++) {
-            img.push(args.tags.get(i))
-        }
-
-        return img.id
-    }
+def sbtInitCreds {
+   
 }
 
-def getContainerTags(config, Map tags = [:]) {
-
-    println "getting list of tags for container"
-    def String commit_tag
-    def String version_tag
-
-    try {
-        // if PR branch tag with only branch name
-        if (env.BRANCH_NAME.contains('PR')) {
-            commit_tag = env.BRANCH_NAME
-            tags << ['commit': commit_tag]
-            return tags
-        }
-    } catch (Exception e) {
-        println "WARNING: commit unavailable from env. ${e}"
-    }
-
-    // commit tag
-    try {
-        // if branch available, use as prefix, otherwise only commit hash
-        if (env.BRANCH_NAME) {
-            commit_tag = env.BRANCH_NAME + '-' + env.GIT_COMMIT_ID.substring(0, 7)
-        } else {
-            commit_tag = env.GIT_COMMIT_ID.substring(0, 7)
-        }
-        tags << ['commit': commit_tag]
-    } catch (Exception e) {
-        println "WARNING: commit unavailable from env. ${e}"
-    }
-
-    // master tag
-    try {
-        if (env.BRANCH_NAME == 'master') {
-            tags << ['master': 'latest']
-        }
-    } catch (Exception e) {
-        println "WARNING: branch unavailable from env. ${e}"
-    }
-
-    // build tag only if none of the above are available
-    if (!tags) {
-        try {
-            tags << ['build': env.BUILD_TAG]
-        } catch (Exception e) {
-            println "WARNING: build tag unavailable from config.project. ${e}"
-        }
-    }
-
-    return tags
+def sbtInitDockerContainer {
+  container('docker') {
+    sh 'apk update'
+    sh 'apk add openjdk8'
+    sh 'mkdir /sbt && wget -O /sbt/sbt-launch.jar https://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.13/sbt-launch.jar'
+    sh 'echo "java -Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -jar /sbt/sbt-launch.jar "$@"" > /sbt/sbt'
+    sh 'chmod u+x /sbt/sbt'
+    sh 'cp -r .sbt /root'
+  }
 }
 
-def getContainerRepoAcct(config) {
+def sbtCompileAndTest(Map args) {
+  sh 'sbt compile'
+  sh 'sbt compile:test'
+}
 
-    println "setting container registry creds according to Jenkinsfile.json"
-    def String acct
+def sbtTests (Map args) {
+  sh 'sbt scalastyle' 
+  if (config.app.test) {
+      println 'sbt test'
+      sh "sbt  -Dspecs2.timeFactor=3 test"
+      sh 'mkdir -p junit && find . -type f -regex ".*/target/test-reports/.*xml" -exec cp {} junit/ \\;'
+      junit allowEmptyResults: true, testResults: 'junit/*.xml'
+  }
+}
 
-    if (env.BRANCH_NAME == 'master') {
-        acct = config.container_repo.master_acct
-    } else {
-        acct = config.container_repo.alt_acct
-    }
-
-    return acct
+def sbtBuildAndPush {
+  container('docker') { 
+    sh 'sbt package'
+    sh 'sbt docker'
+    sh 'sbt dockerPush''
+  }
 }
 
 @NonCPS
