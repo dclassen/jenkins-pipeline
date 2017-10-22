@@ -104,11 +104,11 @@ def gitEnvVars() {
     println "env.GIT_REMOTE_URL ==> ${env.GIT_REMOTE_URL}"
 }
 
-def sbtInitCreds {
+def sbtInitCreds() {
    
 }
 
-def sbtInitDockerContainer {
+def sbtInitDockerContainer() {
   container('docker') {
     sh 'apk update'
     sh 'apk add openjdk8'
@@ -119,12 +119,12 @@ def sbtInitDockerContainer {
   }
 }
 
-def sbtCompileAndTest(Map args) {
+def sbtCompileAndTest() {
   sh 'sbt compile'
   sh 'sbt compile:test'
 }
 
-def sbtTests (Map args) {
+def sbtTests() {
   sh 'sbt scalastyle' 
   if (config.app.test) {
       println 'sbt test'
@@ -134,7 +134,7 @@ def sbtTests (Map args) {
   }
 }
 
-def sbtBuildAndPush {
+def sbtBuildAndPush() {
   container('docker') { 
     sh 'sbt package'
     sh 'sbt docker'
