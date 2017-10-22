@@ -138,7 +138,7 @@ def sbtBuildAndPush() {
   container('docker') { 
     sh 'sbt package'
     sh 'sbt docker'
-    sh 'sbt dockerPush''
+    sh 'sbt dockerPush'
   }
 }
 
