@@ -2,6 +2,8 @@
 
 package io.estrado;
 
+def mysbt = 'java -Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=256M -jar /sbt/sbt-launch.jar'
+
 def kubectlTest() {
     // Test that kubectl can correctly communication with the Kubernetes API
     println "checking kubectl connnectivity to the API"
@@ -112,10 +114,16 @@ def sbtInitDockerContainer() {
   container('docker') {
     sh 'apk update'
     sh 'apk add openjdk8'
+    sh 'apk add python'
+    sh 'apk add curl'
+    sh 'curl https://s3.amazonaws.com/aws-cli/awscli-bundle.zip -o awscli-bundle.zip'
+    sh 'unzip awscli-bundle.zip'
+    sh './awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws'
     sh 'mkdir /sbt && wget -O /sbt/sbt-launch.jar https://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.13/sbt-launch.jar'
-    sh 'echo "java -Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -jar /sbt/sbt-launch.jar "$@"" > /sbt/sbt'
+    sh 'echo "java -Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=256M -jar /sbt/sbt-launch.jar "$@"" > /sbt/sbt'
     sh 'chmod u+x /sbt/sbt'
     sh 'cp -r .sbt /root'
+    sh 'cp -r .aws /home/jenkins'
   }
 }
 
@@ -135,11 +143,18 @@ def sbtTests() {
 }
 
 def sbtBuildAndPush() {
-  container('docker') { 
-    sh 'sbt package'
-    sh 'sbt docker'
-    sh 'sbt dockerPush'
-  }
+      sh 'sbt package'
+      sh 'sbt docker'
+      sh 'sbt dockerPush'
+}
+
+def sbtEBPublish() {
+      sh "find target/scala* -name \"*.war\" -type f |  xargs -n 1 sh -c \'echo \$0\'"
+      // \'aws s3 cp $0 s3://${config.eb.s3Bucket}/${config.app.name}/\'
+      sh "find target/scala* -name \"*.war\" -type f -exec basename {} \\; |  xargs -n 1 sh -c \'echo \$0\'"
+      // \'aws elasticbeanstalk create-application-version --application-name ${config.chart.values}-${config.app.name} 
+      // --version-label $BUILD_NUM $GIT_COMMIT_ID --source-bundle S3Bucket=\"${config.eb.s3Bucket}\",S3Key=\"${config.app.name}/$0\" 
+      // --description JenkinsBuild:$BRANCH_NAME:$BUILD_NUMBER --no-auto-create-application\'
 }
 
 @NonCPS
