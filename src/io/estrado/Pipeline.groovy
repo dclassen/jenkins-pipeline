@@ -171,7 +171,7 @@ def sbtEBPublish(Map args) {
       sh '/usr/bin/env'
       sh "find target/scala* -name \"*.war\" -type f |  xargs -n 1 sh -c \'echo \$0\'"
       sh "aws s3 ls s3://${params.s3Bucket}/${params.appName}"
-      echo "\'aws s3 cp $0 s3://${params.s3Bucket}/${params.appName}/\'"
+      echo "\'aws s3 cp output_from_find_above  s3://${params.s3Bucket}/${params.appName}/\'"
       sh "find target/scala* -name \"*.war\" -type f -exec basename {} \\; |  xargs -n 1 sh -c \'echo \$0\'"
       echo "aws elasticbeanstalk create-application-version --application-name ${params.deployment}-${params.appName}"
       echo " --version-label ${params.buildNum}-${params.commitId} --source-bundle S3Bucket=\"${params.s3Bucket}\",S3Key=\"${params.appName}/$0\""
