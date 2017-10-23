@@ -167,7 +167,7 @@ def sbtBuildAndPush(Map args) {
         ${args.mysbt} package
         ${args.mysbt} docker
         ${args.mysbt} dockerPush
-      """"
+       """
 }
 
 def sbtEBPublish(Map args) {
