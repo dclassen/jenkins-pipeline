@@ -147,10 +147,8 @@ def sbtInitDockerContainer() {
 }
 
 def sbtCompileAndTest(Map args) {
-  sh """
-     ${args.mysbt} compile
-     ${args.mysbt} test:compile
-  """
+  sh "${args.mysbt} compile"
+  sh "${args.mysbt} test:compile"
 }
 
 def sbtTests(Map args) {
@@ -164,21 +162,20 @@ def sbtTests(Map args) {
 }
 
 def sbtBuildAndPush(Map args) {
-      sh """
-        ${args.mysbt} package
-        ${args.mysbt} docker
-        ${args.mysbt} dockerPush
-       """
+      sh "${args.mysbt} package"
+      sh "${args.mysbt} docker"
+      sh "${args.mysbt} dockerPush"
 }
 
 def sbtEBPublish(Map args) {
       sh '/usr/bin/env'
       sh "find target/scala* -name \"*.war\" -type f |  xargs -n 1 sh -c \'echo \$0\'"
-      // \'aws s3 cp $0 s3://${config.eb.s3Bucket}/${config.app.name}/\'
+      sh "aws s3 ls s3://${params.s3Bucket}/${params.appName}"
+      echo "\'aws s3 cp $0 s3://${params.s3Bucket}/${params.appName}/\'"
       sh "find target/scala* -name \"*.war\" -type f -exec basename {} \\; |  xargs -n 1 sh -c \'echo \$0\'"
-      // \'aws elasticbeanstalk create-application-version --application-name ${config.chart.values}-${config.app.name} 
-      // --version-label $BUILD_NUM $GIT_COMMIT_ID --source-bundle S3Bucket=\"${config.eb.s3Bucket}\",S3Key=\"${config.app.name}/$0\" 
-      // --description JenkinsBuild:$BRANCH_NAME:$BUILD_NUMBER --no-auto-create-application\'
+      echo "aws elasticbeanstalk create-application-version --application-name ${params.deployment}-${params.appName}"
+      echo " --version-label ${params.buildNum}-${params.commitId} --source-bundle S3Bucket=\"${params.s3Bucket}\",S3Key=\"${params.appName}/$0\""
+      echo " --description JenkinsBuild:${params.branch}:${params.buildNum} --no-auto-create-application\'"
 }
 
 @NonCPS
