@@ -138,7 +138,6 @@ def sbtInitCreds() {
 }
 
 def sbtInitDockerContainer() {
-  container('docker') {
     sh 'apk update'
     sh 'apk add openjdk8'
     sh 'apk add python'
@@ -151,7 +150,6 @@ def sbtInitDockerContainer() {
     sh 'chmod u+x /sbt/sbt'
     sh 'cp -r .sbt /root'
     sh 'cp -r .aws /home/jenkins'
-  }
 }
 
 def sbtCompileAndTest() {
