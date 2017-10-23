@@ -98,14 +98,16 @@ def helmChartPublish(Map args) {
 def gitCommit(Map args) {
         println("commiting to github")
         sshagent (credentials:["${args.creds_id}"]) {
-          sh "git checkout ${args.branch}"
-          sh "git config user.email \"${args.git_user_email}\""
-          sh "git config user.name \"${args.git_user}\""
-          sh 'git config push.default simple'
-          sh "git add ${args.chart}/values.yaml ${args.chart}/Chart.yaml"
-          sh "git commit -m \"Updating ${args.app_name}.image.tag to $args.commit_id\""
-          sh 'git status'
-          sh "git push origin ${args.branch}"
+          sh """
+            git checkout ${args.branch}
+            git config user.email \"${args.git_user_email}\"
+            git config user.name \"${args.git_user}\"
+            git config push.default simple
+            git add ${args.chart}/values.yaml ${args.chart}/Chart.yaml
+            git commit -m \"Updating ${args.app_name}.image.tag to $args.commit_id\"
+            git status
+            git push origin ${args.branch}
+          """
         } // sshagent
 }
 
@@ -144,8 +146,10 @@ def sbtInitDockerContainer() {
 }
 
 def sbtCompileAndTest(Map args) {
-  sh "${args.mysbt} compile"
-  sh "${args.mysbt} compile:test"
+  sh """
+     ${args.mysbt} compile
+     ${args.mysbt} test:compile
+  """
 }
 
 def sbtTests(Map args) {
@@ -159,9 +163,11 @@ def sbtTests(Map args) {
 }
 
 def sbtBuildAndPush(Map args) {
-      sh "${args.mysbt} package"
-      sh "${args.mysbt} docker"
-      sh "${args.mysbt} dockerPush"
+      sh """
+        ${args.mysbt} package
+        ${args.mysbt} docker
+        ${args.mysbt} dockerPush
+      """"
 }
 
 def sbtEBPublish(Map args) {
@@ -180,11 +186,9 @@ def getMapValues(Map map=[:]) {
     def map_values = []
 
     entries.addAll(map.entrySet())
-
     for (int i=0; i < entries.size(); i++){
         String value =  entries.get(i).value
         map_values.add(value)
     }
-
     return map_values
 }
