@@ -10,6 +10,33 @@ def kubectlTest() {
     sh "kubectl get nodes"
 }
 
+
+
+def genAWSCliCreds() {
+   def aws_creds = '[default]' + "\naws_access_key_id = $AWS_ACCESS_KEY\naws_secret_access_key = $AWS_SECRET_KEY"
+   def aws_config = '[default]' + "\noutput = json\nregion = $AWS_REGION"
+   sh """
+        mkdir -p .aws/
+        echo  \"${aws_creds}\"  > .aws/credentials
+        chmod 400 .aws/credentials
+        echo  \"${aws_config}\"  > .aws/config
+        chmod 400 .aws/config
+      """
+}
+
+def genNexusRepoConf() {
+      def sbt_repos= '[repositories]\nlocal\nivy-proxy-releases: http://nexus.burnerapp.com:8080/content/groups/ivy-releases/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]\nmaven-proxy-releases: http://nexus.burnerapp.com:8080/content/groups/public/\nmaven-private-snapshots: http://nexus.burnerapp.com:8080/content/repositories/snapshots/\nmaven-private-releases:  http://nexus.burnerapp.com:8080/content/repositories/releases/\nsonatype-proxy-releases: http://nexus.burnerapp.com:8080/repositories/sonatype_public/, [organization]/[module]/[revision]/[type]s/[artifact](-[classifier]).[ext]\ncenter: https://jcenter.bintray.com/\nmaven-central-proxy: http://nexus.burnerapp.com:8080/content/repositories/central/\ntypesafe-ivy-releases: https://repo.typesafe.com/typesafe/ivy-releases/, [organization]/[module]/[revision]/[type]s/[artifact](-[classifier]).[ext], bootOnly\nsbt-ivy-snapshots: https://repo.scala-sbt.org/scalasbt/ivy-snapshots/, [organization]/[module]/[revision]/[type]s/[artifact](-[classifier]).[ext], bootOnly'
+      def sbt_creds_plugin = 'credentials += Credentials(Path.userHome / \\".sbt\\" / \\".credentials\\")'
+      def sbt_creds = "realm=Sonatype Nexus Repository Manager\nhost=nexus.burnerapp.com\nuser=$REPO_USER\npassword=$REPO_PASSWORD"
+      println("Gen sbt nexus repo creds")
+      sh """
+        mkdir -p .sbt/0.13/plugins
+        echo  \"${sbt_repos}\"  > .sbt/repositories
+        echo  \"${sbt_creds}\" > .sbt/.credentials
+        echo  \"${sbt_creds_plugin}\" > .sbt/0.13/plugins/plugins.sbt
+      """
+}
+
 // setup helm connectivity to Kubernetes API and Tiller
 
 def helmInit() {
