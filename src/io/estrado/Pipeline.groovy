@@ -92,7 +92,8 @@ def helmChartPublisherInit() {
 }
 
 def helmChartPublish(Map args) {
-      sh "curl -i -X PUT -F repo=stable  -F chart=@${args.file} ${args.url}"
+      def pub_cmd = 'curl -i -X PUT -F repo=stable  -F chart=@' + "${args.file} ${args.url}"
+      sh "${cmd}"
 }
 
 def gitCommit(Map args) {
@@ -171,6 +172,7 @@ def sbtBuildAndPush(Map args) {
 }
 
 def sbtEBPublish(Map args) {
+      sh '/usr/bin/env'
       sh "find target/scala* -name \"*.war\" -type f |  xargs -n 1 sh -c \'echo \$0\'"
       // \'aws s3 cp $0 s3://${config.eb.s3Bucket}/${config.app.name}/\'
       sh "find target/scala* -name \"*.war\" -type f -exec basename {} \\; |  xargs -n 1 sh -c \'echo \$0\'"
