@@ -2,7 +2,7 @@
 
 package io.estrado;
 
-def mysbt = 'java -Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=256M -jar /sbt/sbt-launch.jar'
+def mysbt = 'java -Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -jar /sbt/sbt-launch.jar'
 
 def kubectlTest() {
     // Test that kubectl can correctly communication with the Kubernetes API
@@ -120,7 +120,7 @@ def sbtInitDockerContainer() {
     sh 'unzip awscli-bundle.zip'
     sh './awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws'
     sh 'mkdir /sbt && wget -O /sbt/sbt-launch.jar https://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.13/sbt-launch.jar'
-    sh 'echo "java -Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=256M -jar /sbt/sbt-launch.jar "$@"" > /sbt/sbt'
+    sh 'echo "java -Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -jar /sbt/sbt-launch.jar "$@"" > /sbt/sbt'
     sh 'chmod u+x /sbt/sbt'
     sh 'cp -r .sbt /root'
     sh 'cp -r .aws /home/jenkins'
@@ -128,24 +128,24 @@ def sbtInitDockerContainer() {
 }
 
 def sbtCompileAndTest() {
-  sh 'sbt compile'
-  sh 'sbt compile:test'
+  sh "${mysbt} compile"
+  sh "${mysbt} compile:test"
 }
 
 def sbtTests() {
-  sh 'sbt scalastyle' 
+  sh "${mysbt} scalastyle" 
   if (config.app.test) {
       println 'sbt test'
-      sh "sbt  -Dspecs2.timeFactor=3 test"
+      sh "${mysbt}  -Dspecs2.timeFactor=3 test"
       sh 'mkdir -p junit && find . -type f -regex ".*/target/test-reports/.*xml" -exec cp {} junit/ \\;'
       junit allowEmptyResults: true, testResults: 'junit/*.xml'
   }
 }
 
 def sbtBuildAndPush() {
-      sh 'sbt package'
-      sh 'sbt docker'
-      sh 'sbt dockerPush'
+      sh "${mysbt} package"
+      sh "${mysbt} docker"
+      sh "${mysbt} dockerPush"
 }
 
 def sbtEBPublish() {
