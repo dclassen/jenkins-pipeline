@@ -2,15 +2,11 @@
 
 package io.estrado;
 
-def mysbt = 'java -Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -jar /sbt/sbt-launch.jar'
-
 def kubectlTest() {
     // Test that kubectl can correctly communication with the Kubernetes API
     println "checking kubectl connnectivity to the API"
     sh "kubectl get nodes"
 }
-
-
 
 def genAWSCliCreds() {
    def aws_creds = '[default]' + "\naws_access_key_id = $AWS_ACCESS_KEY\naws_secret_access_key = $AWS_SECRET_KEY"
@@ -53,7 +49,6 @@ def helmConfig() {
     println "checking client/server version"
     sh "helm version"
 }
-
 
 def helmDeploy(Map args) {
     //configure helm client and confirm tiller process is installed
@@ -133,10 +128,6 @@ def gitEnvVars() {
     println "env.GIT_REMOTE_URL ==> ${env.GIT_REMOTE_URL}"
 }
 
-def sbtInitCreds() {
-   
-}
-
 def sbtInitDockerContainer() {
     sh 'apk update'
     sh 'apk add openjdk8'
@@ -152,28 +143,28 @@ def sbtInitDockerContainer() {
     sh 'cp -r .aws /home/jenkins'
 }
 
-def sbtCompileAndTest() {
-  sh "${mysbt} compile"
-  sh "${mysbt} compile:test"
+def sbtCompileAndTest(Map args) {
+  sh "${args.mysbt} compile"
+  sh "${args.mysbt} compile:test"
 }
 
-def sbtTests() {
-  sh "${mysbt} scalastyle" 
+def sbtTests(Map args) {
+  sh "${args.mysbt} scalastyle" 
   if (config.app.test) {
       println 'sbt test'
-      sh "${mysbt}  -Dspecs2.timeFactor=3 test"
+      sh "${args.mysbt}  -Dspecs2.timeFactor=3 test"
       sh 'mkdir -p junit && find . -type f -regex ".*/target/test-reports/.*xml" -exec cp {} junit/ \\;'
       junit allowEmptyResults: true, testResults: 'junit/*.xml'
   }
 }
 
-def sbtBuildAndPush() {
-      sh "${mysbt} package"
-      sh "${mysbt} docker"
-      sh "${mysbt} dockerPush"
+def sbtBuildAndPush(Map args) {
+      sh "${args.mysbt} package"
+      sh "${args.mysbt} docker"
+      sh "${args.mysbt} dockerPush"
 }
 
-def sbtEBPublish() {
+def sbtEBPublish(Map args) {
       sh "find target/scala* -name \"*.war\" -type f |  xargs -n 1 sh -c \'echo \$0\'"
       // \'aws s3 cp $0 s3://${config.eb.s3Bucket}/${config.app.name}/\'
       sh "find target/scala* -name \"*.war\" -type f -exec basename {} \\; |  xargs -n 1 sh -c \'echo \$0\'"
