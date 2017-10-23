@@ -154,7 +154,7 @@ def sbtCompileAndTest(Map args) {
 
 def sbtTests(Map args) {
   sh "${args.mysbt} scalastyle" 
-  if (config.app.test) {
+  if (args.test) {
       println 'sbt test'
       sh "${args.mysbt}  -Dspecs2.timeFactor=3 test"
       sh 'mkdir -p junit && find . -type f -regex ".*/target/test-reports/.*xml" -exec cp {} junit/ \\;'
