@@ -5,8 +5,7 @@ package io.estrado;
 def kubectlTest() {
     // Test that kubectl can correctly communication with the Kubernetes API
     println "checking kubectl connnectivity to the API"
-    sh "kubectl get nodes"
-}
+    sh "kubectl get nodes" }
 
 def genAWSCliCreds() {
    def aws_creds = '[default]' + "\naws_access_key_id = $AWS_ACCESS_KEY\naws_secret_access_key = $AWS_SECRET_KEY"
@@ -173,7 +172,7 @@ def sbtEBPublish(Map args) {
       sh "aws s3 ls s3://${args.s3Bucket}/${args.appName}"
       echo "\'aws s3 cp output_from_find_above  s3://${args.s3Bucket}/${args.appName}/\'"
       sh "find target/scala* -name \"*.war\" -type f -exec basename {} \\; |  xargs -n 1 sh -c \'echo \$0\'"
-      echo "aws elasticbeanstalk create-application-version --application-name ${args.deployment}-${args.appName}"
+      echo "aws elasticbeanstalk create-application-version --application-name ${args.chart}-${args.appName}"
       echo " --version-label ${args.buildNum}-${args.commitId} --source-bundle S3Bucket=\"${args.s3Bucket}\",S3Key=\"${args.appName}/dollar_sign_zero\""
       echo " --description JenkinsBuild:${args.branch}:${args.buildNum} --no-auto-create-application\'"
 }
