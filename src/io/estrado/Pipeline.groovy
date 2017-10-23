@@ -174,7 +174,7 @@ def sbtEBPublish(Map args) {
       echo "\'aws s3 cp output_from_find_above  s3://${args.s3Bucket}/${args.appName}/\'"
       sh "find target/scala* -name \"*.war\" -type f -exec basename {} \\; |  xargs -n 1 sh -c \'echo \$0\'"
       echo "aws elasticbeanstalk create-application-version --application-name ${args.deployment}-${args.appName}"
-      echo " --version-label ${params.buildNum}-${params.commitId} --source-bundle S3Bucket=\"${args.s3Bucket}\",S3Key=\"${args.appName}/dollar_sign_zero\""
+      echo " --version-label ${args.buildNum}-${args.commitId} --source-bundle S3Bucket=\"${args.s3Bucket}\",S3Key=\"${args.appName}/dollar_sign_zero\""
       echo " --description JenkinsBuild:${args.branch}:${args.buildNum} --no-auto-create-application\'"
 }
 
