@@ -92,7 +92,7 @@ def helmChartPublisherInit() {
 
 def helmChartPublish(Map args) {
       def pub_cmd = 'curl -i -X PUT -F repo=stable  -F chart=@' + "${args.file} ${args.url}"
-      sh "${pub_cmd}"
+      sh pub_cmd
 }
 
 def gitCommit(Map args) {
