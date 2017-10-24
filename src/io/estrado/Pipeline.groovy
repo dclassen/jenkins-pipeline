@@ -90,7 +90,7 @@ def helmChartPublisherInit() {
       sh 'apk update && apk add curl'
 }
 
-def helmChartPublish(Map args) {
+def helmChartPublishPost(Map args) {
       def pub_cmd = 'curl -i -X PUT -F repo=stable  -F chart=@' + "${args.file} ${args.url}"
       sh pub_cmd
 }
