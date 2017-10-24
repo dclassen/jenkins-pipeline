@@ -83,7 +83,7 @@ def helmTest(Map args) {
 }
 
 def helmPackage(Map args) {
-    dir ("${args.repo}") { sh "helm package ${args.chart}" }
+     sh "helm package ${args.chart}"
 }
 
 def helmChartPublisherInit() {
