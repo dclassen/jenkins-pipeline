@@ -166,13 +166,10 @@ def sbtBuildAndPush(Map args) {
 
 def sbtEBPublish(Map args) {
       sh '/usr/bin/env'
-      sh "find target/scala* -name \"*.war\" -type f |  xargs -n 1 sh -c \'echo \$0\'"
+      sh "find target/scala* -name \"*.war\" -type f |  xargs -n 1 sh -c \'aws s3 cp \$0 s3://${args.s3Bucket}/${args.appName}/\'"
       sh "aws s3 ls s3://${args.s3Bucket}/${args.appName}"
-      echo "\'aws s3 cp output_from_find_above  s3://${args.s3Bucket}/${args.appName}/\'"
-      sh "find target/scala* -name \"*.war\" -type f -exec basename {} \\; |  xargs -n 1 sh -c \'echo \$0\'"
-      echo "aws elasticbeanstalk create-application-version --application-name ${args.chart}-${args.appName}"
-      echo " --version-label ${args.buildNum}-${args.commitId} --source-bundle S3Bucket=\"${args.s3Bucket}\",S3Key=\"${args.appName}/dollar_sign_zero\""
-      echo " --description JenkinsBuild:${args.branch}:${args.buildNum} --no-auto-create-application\'"
+      sh "find target/scala* -name \"*.war\" -type f -exec basename {} \\; |  xargs -n 1 sh -c \'aws elasticbeanstalk create-application-version --application-name ${args.chart}-${args.appName} --version-label ${args.buildNum}-${args.commitId} --source-bundle S3Bucket=\"${args.s3Bucket}\",S3Key=\"${args.appName}/\$0\" --description jenkins-build-${args.buildNum}-branch-${args.branch} --no-auto-create-application\'"
+      sh "aws elasticbeanstalk describe-application-versions"
 }
 
 @NonCPS
