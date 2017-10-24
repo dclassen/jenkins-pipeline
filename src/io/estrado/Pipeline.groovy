@@ -98,16 +98,14 @@ def helmChartPublish(Map args) {
 def gitCommit(Map args) {
         println("commiting to github")
         sshagent (credentials:["${args.creds_id}"]) {
-          sh """
-            git checkout ${args.branch}
-            git config user.email \"${args.git_user_email}\"
-            git config user.name \"${args.git_user}\"
-            git config push.default simple
-            git add ${args.chart}/values.yaml ${args.chart}/Chart.yaml
-            git commit -m \"Updating ${args.app_name}.image.tag to $args.commit_id\"
-            git status
-            git push origin ${args.branch}
-          """
+          sh "git checkout ${args.branch}"
+          sh "git config user.email \"${args.git_user_email}\""
+          sh "git config user.name \"${args.git_user}\""
+          sh "git config push.default simple"
+          sh "git add ${args.chart}/values.yaml ${args.chart}/Chart.yaml"
+          sh "git commit -m \"Updating ${args.app_name}.image.tag to $args.commit_id\""
+          sh "git status"
+          sh "git push origin ${args.branch}"
         } // sshagent
 }
 
