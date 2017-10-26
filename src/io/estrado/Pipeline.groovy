@@ -164,6 +164,10 @@ def sbtBuildAndPush(Map args) {
       sh "${args.mysbt} dockerPush"
 }
 
+def sbtPublishNexus(Map args) {
+      sh "${args.mysbt} publish"
+}
+
 def sbtEBPublish(Map args) {
       sh '/usr/bin/env'
       sh "find target/scala* -name \"*.war\" -type f |  xargs -n 1 sh -c \'aws s3 cp \$0 s3://${args.s3Bucket}/${args.appName}/\'"
