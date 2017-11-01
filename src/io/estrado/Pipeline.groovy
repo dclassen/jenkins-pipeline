@@ -128,6 +128,17 @@ def gitEnvVars() {
     println "env.GIT_REMOTE_URL ==> ${env.GIT_REMOTE_URL}"
 }
 
+def jenkinsFilesupdateRepo(Map args) {
+      dir (args.repo) {
+        checkout([ $class: 'GitSCM', branches: [[name: "*/develop"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[ credentialsId: args.git_creds, url: args.repo ]]])
+        def jj = readJSON file: args.src_jjfile
+        jj.app.name = jj.container_repo.name = it
+        def nj = new groovy.json.JsonBuilder(jj).toPrettyString()
+        sh "echo \"${nj}\" > ${args.src_jjfile}"
+        sh "cp ${args.src_jfile} ."
+      } // dir repo
+}
+
 def sbtInitDockerContainer() {
     sh 'apk update'
     sh 'apk add openjdk8'
