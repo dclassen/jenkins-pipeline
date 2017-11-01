@@ -129,6 +129,7 @@ def gitEnvVars() {
 }
 
 def jenkinsFilesUpdateRepo(Map args) {
+      dir ('repos') 
       dir (args.repo) {
         checkout([ $class: 'GitSCM', branches: [[name: "*/develop"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[ credentialsId: args.git_creds, url: args.repo ]]])
         def jj = readJSON file: args.src_jjfile
