@@ -128,7 +128,7 @@ def gitEnvVars() {
     println "env.GIT_REMOTE_URL ==> ${env.GIT_REMOTE_URL}"
 }
 
-def jenkinsFilesupdateRepo(Map args) {
+def jenkinsFilesUpdateRepo(Map args) {
       dir (args.repo) {
         checkout([ $class: 'GitSCM', branches: [[name: "*/develop"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[ credentialsId: args.git_creds, url: args.repo ]]])
         def jj = readJSON file: args.src_jjfile
