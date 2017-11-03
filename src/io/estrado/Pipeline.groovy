@@ -95,6 +95,19 @@ def helmChartPublishPost(Map args) {
       sh pub_cmd
 }
 
+def gitCommitTwo(Map args) {
+       println("commiting to github")
+       sshagent (credentials:["${args.creds_id}"]) {
+         sh "git checkout ${args.branch}"
+         sh "git config user.email \"${args.git_user_email}\""
+         sh "git config user.name \"${args.git_user}\""
+         sh "git config push.default simple"
+         sh "git commit -m \"Updating ${args.app_name} Jenkinsfiles\""
+         sh "git status"
+         sh "git push origin ${args.branch}"
+       } // sshagent
+}
+
 def gitCommit(Map args) {
         println("commiting to github")
         sshagent (credentials:["${args.creds_id}"]) {
