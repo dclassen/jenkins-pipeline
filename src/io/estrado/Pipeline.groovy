@@ -101,6 +101,10 @@ def gitCommitTwo(Map args) {
          sh "git checkout ${args.branch}"
          sh "git config user.email \"${args.git_user_email}\""
          sh "git config user.name \"${args.git_user}\""
+         args.files.each {
+           print  it
+           sh "git add ${it}"
+         }
          sh "git config push.default simple"
          sh "git commit -m \"Updating ${args.app_name} Jenkinsfiles\""
          sh "git status"
