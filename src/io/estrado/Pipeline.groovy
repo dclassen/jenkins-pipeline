@@ -26,9 +26,11 @@ def genNexusRepoConf() {
       println("Gen sbt nexus repo creds")
       sh """
         mkdir -p .sbt/0.13/plugins
+        mkdir -p .sbt/1.0/plugins
         echo  \"${sbt_repos}\"  > .sbt/repositories
         echo  \"${sbt_creds}\" > .sbt/.credentials
         echo  \"${sbt_creds_plugin}\" > .sbt/0.13/plugins/plugins.sbt
+        echo  \"${sbt_creds_plugin}\" > .sbt/1.0/plugins/plugins.sbt
       """
 }
 
